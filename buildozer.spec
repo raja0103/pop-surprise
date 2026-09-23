@@ -1,24 +1,37 @@
 [app]
 
-# App
+# =========================================================
+# APP
+# =========================================================
+
 title = Pop Surprise
+
 package.name = popsurprise
 package.domain = com.popsurprise
 
-# Source
+# Source folder
 source.dir = .
+
+# Files included in APK
 source.include_exts = py,png,jpg,jpeg,kv,atlas,json,wav,mp3
 
-# Version
+# App version
 version = 0.1.0
 
-# Python dependencies
-requirements = python3,kivy
 
-# App orientation
+# =========================================================
+# PYTHON DEPENDENCIES
+# =========================================================
+
+requirements = python3,kivy==2.3.1
+
+
+# =========================================================
+# DISPLAY
+# =========================================================
+
 orientation = portrait
 
-# Full screen mobile game
 fullscreen = 1
 
 
@@ -26,21 +39,21 @@ fullscreen = 1
 # ANDROID
 # =========================================================
 
-# Android API
+# Target Android API
 android.api = 35
 
-# Minimum Android version
+# Minimum Android API
 android.minapi = 24
 
-# Build architecture
+# 64-bit Android
 android.archs = arm64-v8a
 
-# Accept Android SDK license
+# Accept SDK licenses
 android.accept_sdk_license = True
 
 
 # =========================================================
-# BUILD
+# BUILDOZER
 # =========================================================
 
 [buildozer]
