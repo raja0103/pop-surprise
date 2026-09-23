@@ -30,7 +30,7 @@ fullscreen = 1
 android.api = 35
 
 # Minimum Android version
-android.minapi = 23
+android.minapi = 24
 
 # Build architecture
 android.archs = arm64-v8a
