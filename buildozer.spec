@@ -9,21 +9,22 @@ title = Pop Surprise
 package.name = popsurprise
 package.domain = com.popsurprise
 
-# Source folder
 source.dir = .
 
-# Files included in APK
 source.include_exts = py,png,jpg,jpeg,kv,atlas,json,wav,mp3
 
-# App version
 version = 0.1.0
 
 
 # =========================================================
-# PYTHON DEPENDENCIES
+# PYTHON / KIVY
+#
+# IMPORTANT:
+# Pin BOTH Android Python and host Python.
+# Otherwise p4a currently resolves python3 to Python 3.14.
 # =========================================================
 
-requirements = python3,kivy==2.3.1
+requirements = python3==3.11.9,hostpython3==3.11.9,kivy==2.3.1
 
 
 # =========================================================
@@ -39,16 +40,12 @@ fullscreen = 1
 # ANDROID
 # =========================================================
 
-# Target Android API
 android.api = 35
 
-# Minimum Android API
 android.minapi = 24
 
-# 64-bit Android
 android.archs = arm64-v8a
 
-# Accept SDK licenses
 android.accept_sdk_license = True
 
 
