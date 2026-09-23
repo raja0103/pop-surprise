@@ -4,7 +4,6 @@ on:
   workflow_dispatch:
 
 jobs:
-
   build:
 
     runs-on: ubuntu-22.04
@@ -12,11 +11,10 @@ jobs:
     env:
       PYTHONFORANDROID_PREREQUISITES_INSTALL_INTERACTIVE: 0
 
-
     steps:
 
       # ==================================================
-      # 1. CHECKOUT
+      # CHECKOUT
       # ==================================================
 
       - name: Checkout repository
@@ -24,7 +22,7 @@ jobs:
 
 
       # ==================================================
-      # 2. PYTHON 3.11
+      # HOST PYTHON
       # ==================================================
 
       - name: Setup Python 3.11
@@ -34,7 +32,7 @@ jobs:
 
 
       # ==================================================
-      # 3. JAVA 17
+      # JAVA
       # ==================================================
 
       - name: Setup Java 17
@@ -45,7 +43,7 @@ jobs:
 
 
       # ==================================================
-      # 4. LINUX DEPENDENCIES
+      # SYSTEM DEPENDENCIES
       # ==================================================
 
       - name: Install Linux dependencies
@@ -79,133 +77,170 @@ jobs:
 
 
       # ==================================================
-      # 5. BUILDOZER + CYTHON
+      # BUILDOZER
       # ==================================================
 
-      - name: Install Buildozer and Cython
+      - name: Install Buildozer
         run: |
           python -m pip install --upgrade pip setuptools wheel
 
           python -m pip install "Cython==0.29.36"
-
           python -m pip install "buildozer==1.5.0"
 
-          echo "================================="
-          echo "PYTHON VERSION"
-          echo "================================="
+          echo "========================================"
+          echo "HOST BUILD ENVIRONMENT"
+          echo "========================================"
 
+          which python
           python --version
 
-          echo "================================="
-          echo "CYTHON VERSION"
-          echo "================================="
+          which pip
+          pip --version
 
           cython --version
-
-          echo "================================="
-          echo "BUILDOZER VERSION"
-          echo "================================="
-
           buildozer --version
 
 
       # ==================================================
-      # 6. CLEAN PREVIOUS BUILD
+      # CLEAN EVERYTHING
+      #
+      # Important because previous build used Python 3.14.
+      # We don't want any cp314 artifacts reused.
       # ==================================================
 
-      - name: Clean previous build
+      - name: Clean old Android build
         run: |
-
-          echo "Cleaning previous Android build..."
+          echo "Cleaning old Buildozer/p4a build..."
 
           rm -rf .buildozer
           rm -rf bin
 
           rm -rf ~/.buildozer/android/platform/build-*
+          rm -rf ~/.buildozer/android/platform/python-for-android
+
+          echo "Clean completed."
 
 
       # ==================================================
-      # 7. BUILD APK
+      # SHOW CONFIG
+      # ==================================================
+
+      - name: Show Buildozer configuration
+        run: |
+          echo "========================================"
+          echo "BUILDOZER SPEC REQUIREMENTS"
+          echo "========================================"
+
+          grep "^requirements" buildozer.spec || true
+
+          echo ""
+          echo "========================================"
+          echo "ANDROID CONFIG"
+          echo "========================================"
+
+          grep "^android.api" buildozer.spec || true
+          grep "^android.minapi" buildozer.spec || true
+          grep "^android.archs" buildozer.spec || true
+
+
+      # ==================================================
+      # BUILD
       # ==================================================
 
       - name: Build Android APK
         run: |
-
           set -o pipefail
 
-          echo "================================="
-          echo "STARTING ANDROID BUILD"
-          echo "================================="
+          echo "========================================"
+          echo "BUILDING POP SURPRISE"
+          echo "========================================"
 
           buildozer -v android debug 2>&1 | tee build.log
 
 
       # ==================================================
-      # 8. SHOW ACTUAL ERROR
+      # DEBUG TARGET PYTHON
+      # ==================================================
+
+      - name: Show Android Python version
+        if: always()
+        run: |
+          echo "========================================"
+          echo "ANDROID PYTHON CHECK"
+          echo "========================================"
+
+          find .buildozer \
+            -type d \
+            \( -name "python3.11" -o -name "python3.12" -o -name "python3.13" -o -name "python3.14" \) \
+            -print 2>/dev/null || true
+
+          echo ""
+          echo "Checking for accidental Python 3.14 files..."
+
+          find .buildozer \
+            -iname "*cp314*" \
+            -o -iname "*python3.14*" \
+            2>/dev/null | head -n 100 || true
+
+
+      # ==================================================
+      # ERROR REPORT
       # ==================================================
 
       - name: Show actual build errors
         if: failure()
         run: |
-
-          echo "================================="
+          echo "========================================"
           echo "ACTUAL BUILD ERRORS"
-          echo "================================="
+          echo "========================================"
 
-          grep -i -B 15 -A 40 \
-            -E "BUILD FAILED|Command failed|CalledProcessError|ModuleNotFoundError|ImportError|ERROR:|FAILED:|fatal error:|No such file|not found|Could not|Execution failed" \
-            build.log | tail -n 600 || true
+          grep -i -B 20 -A 50 \
+            -E "BUILD FAILED|Command failed|CalledProcessError|ModuleNotFoundError|ImportError|ERROR:|FAILED:|fatal error:|No such file|not found|Could not|Execution failed|not a supported wheel" \
+            build.log | tail -n 800 || true
 
           echo ""
-          echo "================================="
-          echo "LAST 300 LINES"
-          echo "================================="
+          echo "========================================"
+          echo "LAST 400 LINES"
+          echo "========================================"
 
-          tail -n 300 build.log || true
+          tail -n 400 build.log || true
 
 
       # ==================================================
-      # 9. UPLOAD BUILD LOG WHEN FAILED
+      # UPLOAD LOG ON FAILURE
       # ==================================================
 
       - name: Upload build log if failed
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-
           name: Pop-Surprise-Build-Log
-
           path: build.log
-
           if-no-files-found: warn
 
 
       # ==================================================
-      # 10. FIND GENERATED APK
+      # FIND APK
       # ==================================================
 
-      - name: Find APK
+      - name: Find generated APK
         if: success()
         run: |
-
-          echo "================================="
+          echo "========================================"
           echo "GENERATED APK"
-          echo "================================="
+          echo "========================================"
 
           find bin -type f -name "*.apk" -print
 
 
       # ==================================================
-      # 11. UPLOAD APK
+      # UPLOAD APK
       # ==================================================
 
       - name: Upload APK
         if: success()
         uses: actions/upload-artifact@v4
         with:
-
           name: Pop-Surprise-APK
-
           path: bin/*.apk
-
           if-no-files-found: error
